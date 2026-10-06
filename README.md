@@ -70,6 +70,20 @@ Completar esta tabla con salidas observadas en los contenedores de la práctica.
 | Backend (HTTP) | Pendiente | `/api/health` | Pendiente | Pendiente | Pendiente | Pendiente | Pendiente | Pendiente |
 | Directorio LDAP (LDAPS) | Pendiente | DN ficticio | Pendiente | Pendiente | Pendiente | Pendiente | Pendiente | Pendiente |
 
+### Corridas de verificación observadas
+
+Estas corridas solo verifican operación y protección; **no determinan el máximo estable del hardware**. Deben repetirse en el equipo que se evaluará antes de reportar capacidad máxima.
+
+| Servicio | Duración | Workers | Límite configurado | Operaciones observadas | Resultado | Estado |
+|---|---:|---:|---:|---|---|---|
+| Frontend HTTP | 8 s | 2 | 5 req/s | 40, 5.0 req/s, 40 HTTP 200 | Correcto | Contenedor siguió activo |
+| Backend HTTP | 8 s | 2 | 5 req/s | 40, 5.0 req/s, 40 HTTP 200 | Correcto | Health check siguió activo |
+| OpenLDAP LDAPS | 10.1 s | 2 | 10 ops/s | 70, 6.9 ops/s; 64 binds rechazados y 6 errores de transporte | Fail2Ban baneó `172.21.0.6` tras detectar 65 conexiones | LDAP, frontend y backend siguieron activos; el ban de prueba fue retirado |
+| Frontend HTTP (umbral) | 10.6 s | 10 | 80 req/s | 142, 13.4 req/s; 100 HTTP 200 y 42 errores de conexión tras el ban | `http-flood` baneó `172.21.0.6` tras 141 eventos observados | Contenedor siguió activo; ban retirado |
+| Backend HTTP (umbral) | 10.9 s | 10 | 80 req/s | 164, 15.1 req/s; 125 HTTP 200 y 39 errores de conexión tras el ban | `http-flood` baneó `172.21.0.6` tras 125 eventos observados | Health check siguió activo; ban retirado |
+
+Las corridas de umbral muestran cuánto tráfico se atendió hasta que actuó Fail2Ban; el `rps` resultante está afectado por el bloqueo y **no debe presentarse como el máximo sostenible del servicio**. Para determinar esa cifra, medir corridas sin que el generador sea baneado y comprobar salud/latencia desde otro origen.
+
 ## Evidencia sugerida
 
 Guardar la salida completa de cada corrida, el estado de `fail2ban-client status` antes/después, logs relevantes, `docker compose ps` antes/después y el resultado de un health check después de retirar un ban. Ocultar contraseñas, secretos y datos personales.

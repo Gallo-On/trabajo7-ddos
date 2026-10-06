@@ -186,10 +186,18 @@ def run_test(
     with counts_lock:
         final_counts = counts.copy()
     total = sum(final_counts.values())
-    ok = final_counts["200"]
     print("\nRESULT")
     print(f"elapsed={elapsed:.1f}s total={total} requests_per_second={total / elapsed:.1f}")
-    print(f"http_200={ok} non_200_or_connection_errors={total - ok} status_counts={dict(final_counts)}")
+    if protocol == "http":
+        print(
+            f"http_200={final_counts['200']} non_200_or_connection_errors={total - final_counts['200']} "
+            f"status_counts={dict(final_counts)}"
+        )
+    else:
+        print(
+            f"ldap_bind_rejected={sum(count for status, count in final_counts.items() if status.startswith('LDAP err='))} "
+            f"transport_errors={final_counts['000']} status_counts={dict(final_counts)}"
+        )
 
 
 def main() -> None:
